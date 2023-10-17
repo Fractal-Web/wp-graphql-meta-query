@@ -140,7 +140,9 @@ class MetaQuery {
 		if ( isset( $config['queryClass'] ) && 'WP_Query' === $config['queryClass'] ) {
 			$this->register_types( $type_name, $type_registry );
 			$fields['metaQuery'] = [
-				'type' => $type_name . 'MetaQuery',
+				'type' => [
+					'list_of' => $type_name . 'MetaQuery',
+				],
 			];
 		}
 
@@ -313,20 +315,24 @@ class MetaQuery {
 		 * @since 0.0.1
 		 */
 		$meta_query = null;
-		if ( ! empty( $input_args['metaQuery'] ) ) {
-			$meta_query = $input_args['metaQuery'];
-			if ( ! empty( $meta_query['metaArray'] ) && is_array( $meta_query['metaArray'] ) ) {
-				if ( 2 < count( $meta_query['metaArray'] ) ) {
-					unset( $meta_query['relation'] );
-				}
-				foreach ( $meta_query['metaArray'] as $meta_query_key => $value ) {
-					$meta_query[] = [
-						$meta_query_key => $value,
-					];
+		if ( ! empty( $input_args['metaQuery'] ) && is_array( $input_args['metaQuery'] ) ) {
+			$meta_query = [];
+
+			foreach ( $input_args['metaQuery'] as $meta_query_value ) {
+				$meta_array = $meta_query_value['metaArray'];
+				
+				if ( ! empty( $meta_array ) ) {
+					foreach ( $meta_array as $meta_array_key => $meta_array_value ) {
+						$new_query[$meta_array_key] = $meta_array_value;
+					}
+
+					if ( count( $meta_array ) >= 2 ) {
+						$new_query['relation'] = $meta_query_value['relation'];
+					}
+
+					$meta_query = $new_query;
 				}
 			}
-			unset( $meta_query['metaArray'] );
-
 		}
 		if ( ! empty( $meta_query ) ) {
 			$query_args['meta_query'] = $meta_query;
